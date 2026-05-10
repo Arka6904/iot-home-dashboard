@@ -42,7 +42,7 @@ function CardContent({ className = "", children }) {
   return <div className={className}>{children}</div>;
 }
 
-function Button({ className = "", children, onClick, variant }) {
+function Button({ className = "", children, onClick }) {
   return (
     <button onClick={onClick} className={className}>
       {children}
@@ -289,7 +289,6 @@ export default function IoTHomeDashboard() {
       setSummary(summaryRes);
       setDevices(devicesRes);
       setAllSensors(allSensorsRes);
-      setSoilData(soilRes);
       setClimateData(climateRes);
       setPowerData(powerRes);
       setServices(
@@ -419,7 +418,10 @@ export default function IoTHomeDashboard() {
 
           <div className="flex flex-wrap gap-2">
             <Button
-              onClick={loadDashboard}
+              onClick={() => {
+                loadDashboard();
+                loadChartByFilter();
+              }}
               className="rounded-2xl bg-emerald-500 text-slate-950 hover:bg-emerald-400"
             >
               <RefreshCw
@@ -541,9 +543,7 @@ export default function IoTHomeDashboard() {
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold">{mainChartTitle}</h2>
-                  <p className="text-sm text-slate-400">
-                    {mainChartSubtitle}
-                  </p>
+                  <p className="text-sm text-slate-400">{mainChartSubtitle}</p>
                 </div>
 
                 <Leaf className="text-emerald-300" />
