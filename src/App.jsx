@@ -51,7 +51,7 @@ function Button({ className = "", children, onClick }) {
 }
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://68.211.160.49:8100";
+  import.meta.env.VITE_API_BASE_URL || "https://api-iot-home.68.211.160.49.sslip.io";
 
 const mockDevices = [
   {
@@ -307,33 +307,29 @@ export default function IoTHomeDashboard() {
     }
   }
 
-  async function loadChartByFilter() {
+  async function loadChartByFilter(currentFilter, currentTimeRange) {
     try {
-      if (filter === "todos" || filter === "cacao") {
+      if (currentFilter === "todos" || currentFilter === "cacao") {
         const data = await getJson(
-          `/api/series/field?field=soil_moisture&type=cacao&range=${timeRange}`
+          `/api/series/field?field=soil_moisture&type=cacao&range=${currentTimeRange}`
         );
 
         setSoilData(data);
         setMainChartTitle("Humedad de suelo por nodo");
         setMainChartSubtitle("D01-D04 / cultivo de cacao");
         setMainChartKeys(["D01", "D02", "D03", "D04"]);
-      }
-
-      if (filter === "granja") {
+      } else if (currentFilter === "granja") {
         const data = await getJson(
-          `/api/series/field?field=air_quality&type=granja&range=${timeRange}`
+          `/api/series/field?field=air_quality&type=granja&range=${currentTimeRange}`
         );
 
         setSoilData(data);
         setMainChartTitle("Calidad del aire por nodo");
         setMainChartSubtitle("D05-D08 / granja");
         setMainChartKeys(["D05", "D06", "D07", "D08"]);
-      }
-
-      if (filter === "twin") {
+      } else if (currentFilter === "twin") {
         const data = await getJson(
-          `/api/series/field?field=power&range=${timeRange}`
+          `/api/series/field?field=power&range=${currentTimeRange}`
         );
 
         setSoilData(data);
@@ -343,16 +339,33 @@ export default function IoTHomeDashboard() {
       }
     } catch (error) {
       console.error(error);
+      // Fallback a mock data según el filtro activo
+      if (currentFilter === "granja") {
+        setSoilData(mockSoilData.map((d) => ({ time: d.time, D05: d.D01, D06: d.D02, D07: d.D03, D08: d.D04 })));
+        setMainChartTitle("Calidad del aire por nodo");
+        setMainChartSubtitle("D05-D08 / granja");
+        setMainChartKeys(["D05", "D06", "D07", "D08"]);
+      } else if (currentFilter === "twin") {
+        setSoilData(mockSoilData.map((d) => ({ time: d.time, D09: d.D01, D10: d.D02 })));
+        setMainChartTitle("Potencia de gemelos digitales");
+        setMainChartSubtitle("D09 riego / D10 ventilación");
+        setMainChartKeys(["D09", "D10"]);
+      } else {
+        setSoilData(mockSoilData);
+        setMainChartTitle("Humedad de suelo por nodo");
+        setMainChartSubtitle("D01-D04 / cultivo de cacao");
+        setMainChartKeys(["D01", "D02", "D03", "D04"]);
+      }
     }
   }
 
   useEffect(() => {
     loadDashboard();
-    loadChartByFilter();
+    loadChartByFilter(filter, timeRange);
 
     const timer = setInterval(() => {
       loadDashboard();
-      loadChartByFilter();
+      loadChartByFilter(filter, timeRange);
     }, 30000);
 
     return () => clearInterval(timer);
